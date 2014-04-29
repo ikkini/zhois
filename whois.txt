@@ -1,0 +1,3 @@
+15169   | 8.8.8.8          | 8.8.8.0/24          | GOOGLE - Google Inc.,US
+7018    | 12.8.8.8         | 12.0.0.0/9          | ATT-INTERNET4 - AT&T Services, Inc.,US
+71      | 15.8.8.8         | 15.0.0.0/8          | HP-INTERNET-AS - Hewlett-Packard Company,US
