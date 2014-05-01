@@ -1,7 +1,23 @@
 #!/usr/bin/env python3
-"""This tool is based on the work of the Cymru crew
-(http://www.team-cymru.org/Services/ip-to-asn.html)
 """
+problems to be solved
+1) minimize expensive (network) queries
+2) list of semi-random integers.
+   All integers belong to an associated range.
+   Place all integers within the minimum number
+   of correctly associated ranges.
+3) minimize size in memory and on disk of data structures
+
+Approach: hard problems first, build test based
+
+tests/ contains:
+    - iplist.db from zmap result.
+    - ripe.db from download.
+
+"""
+### XXX debug/profile
+from memory_profiler import profile
+
 import subprocess
 import socket
 import struct
@@ -11,9 +27,11 @@ except ImportError:
     print('get netaddr module')
     exit(1)
 
-
-### XXX test
-target = '8.8.8.8'
+try:
+    import csv
+except ImportError:
+    print('get csv module')
+    exit(1)
 
 
 def run_command(command):
@@ -31,16 +49,24 @@ def int2ip(addr):
     return socket.inet_ntoa(struct.pack("!I", addr))
 
 
-### XXX test
-cymruquery = "cat whois.txt"
-#cymruquery = "whois -h v4.whois.cymru.com \" -p -f {0}\"".format(target)
+#load ips, sort, into tuple
+#@profile
+def loadips(file):
+    ips = [ip2int(i.strip()) for i in open(file)]
+    ips.sort()
+    ips = tuple(ips)
+    return ips
 
-for ip in run_command(cymruquery):
-    print(ip)
-    #ip = ''.join(ip[0].decode(encoding='utf-8').split()).split('|')
-    print(ip)
-#a = run_command(cymruquery)
-#a = ''.join(a[0].decode(encoding='utf-8').split()).split('|')
 
-### XXX test
-#print(ip2int(a[1]))
+@profile
+def loadRIPEranges(file):
+    inetnum = csv.reader(open(file), delimiter='|')
+    netnum = []
+    for row in inetnum:
+        netnum.append([row[0], row[1], row[2]])
+    print(netnum[len(netnum) - 1][0])
+    print(len(netnum))
+
+
+loadips('tests/iplist.db')
+loadRIPEranges('db/ripe.db')
