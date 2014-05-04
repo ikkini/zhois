@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 problems to be solved
 1) minimize expensive (network) queries
@@ -17,10 +17,15 @@ tests/ contains:
 """
 ### XXX debug/profile
 from memory_profiler import profile
+import datetime
+startTime = datetime.datetime.now()
 
 import subprocess
 import socket
 import struct
+import os.path
+import timeit
+
 try:
     import netaddr
 except ImportError:
@@ -33,11 +38,19 @@ except ImportError:
     print('get csv module')
     exit(1)
 
+try:
+    import sqlite3
+except ImportError:
+    print('get sqlite3 module')
+    exit(1)
+
+datum = datetime.datetime.now().strftime("%F")
+
 
 def run_command(command):
     p = subprocess.Popen(command, shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT)
+                         tdout=subprocess.PIPE,
+                         tderr=subprocess.STDOUT)
     return p.communicate()
 
 
@@ -50,7 +63,7 @@ def int2ip(addr):
 
 
 #load ips, sort, into tuple
-#@profile
+@profile
 def loadips(file):
     ips = [ip2int(i.strip()) for i in open(file)]
     ips.sort()
@@ -60,13 +73,57 @@ def loadips(file):
 
 @profile
 def loadRIPEranges(file):
-    inetnum = csv.reader(open(file), delimiter='|')
-    netnum = []
-    for row in inetnum:
-        netnum.append([row[0], row[1], row[2]])
-    print(netnum[len(netnum) - 1][0])
-    print(len(netnum))
+    """Once a day, if the ripe database does not exist, create one"""
+    if not os.path.exists('tests/ripesql' + datum + '.db'):
+        badranges = []
+        conn = sqlite3.connect('tests/ripesql' + datum + '.db')
+        c = conn.cursor()
+        conn.commit()
+        c.execute('''CREATE TABLE inetnum (ipmin integer,
+                            ipmax integer, netname text, country
+                            text) ''')
+        inetnum = csv.reader(open(file), delimiter='|')
+        for row in inetnum:
+            badrow = {}
+            try:
+                ipmin = ip2int(row[0])
+            except:
+                try:
+                    ipmin = row[0]
+                    badrow['ipmin'] = ipmin
+                except:
+                    ipmin = None
+                    badrow['ipmin'] = None
 
+            try:
+                ipmax = ip2int(row[1])
+            except:
+                try:
+                    ipmax = row[1]
+                    badrow['ipmax'] = ipmax
+                except:
+                    ipmax = None
+                    badrow['ipmax'] = None
+            try:
+                netname = row[2]
+            except:
+                netname = None
+                badrow['netname'] = None
+            try:
+                country = row[3][:2]
+            except:
+                country = None
+                badrow['country'] = None
+            if len(badrow) > 0:
+                badranges.append(badrow)
+            inet = (ipmin, ipmax, netname, country)
+            c.execute('INSERT INTO inetnum VALUES (?,?,?,?)', inet)
+        conn.commit()
+        conn.close()
+        print(badranges)
 
 loadips('tests/iplist.db')
-loadRIPEranges('db/ripe.db')
+loadRIPEranges('tests/ripe.db')
+
+# XXX DEBUG
+print(datetime.datetime.now()-startTime)

@@ -55,5 +55,9 @@ docs/_build/
 # vim
 *swp
 
-# db's
+# "source" file
+*.src
+# for now we also do not add .db files
 *.db
+
+db/getdb2.sh
