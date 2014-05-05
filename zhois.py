@@ -2,12 +2,12 @@
 """
 problems to be solved
 1) minimize expensive (network) queries
-2) list of semi-random integers.
-   All integers belong to an associated range.
-   Place all integers within the minimum number
-   of correctly associated ranges.
+2) list of semi-random integers (ip addresses).
+   All integers belong to an associated range (inetnum).
+   Place all integers within the minimum size
+   correctly associated range.
 3) minimize size in memory and on disk of data structures
-
+4) return a database of all IP addresses with netnames and countries
 Approach: hard problems first, build test based
 
 tests/ contains:
@@ -15,6 +15,8 @@ tests/ contains:
     - ripe.db from download.
 
 """
+workingdir = 'tests/'
+
 ### XXX debug/profile
 from memory_profiler import profile
 import datetime
@@ -25,6 +27,7 @@ import socket
 import struct
 import os.path
 import timeit
+import pickle
 
 try:
     import netaddr
@@ -62,68 +65,55 @@ def int2ip(addr):
     return socket.inet_ntoa(struct.pack("!I", addr))
 
 
-#load ips, sort, into tuple
+#load ips, sort
 @profile
 def loadips(file):
     ips = [ip2int(i.strip()) for i in open(file)]
     ips.sort()
-    ips = tuple(ips)
     return ips
 
 
 @profile
-def loadRIPEranges(file):
+def createRIPEdb(file):
     """Once a day, if the ripe database does not exist, create one"""
-    if not os.path.exists('tests/ripesql' + datum + '.db'):
-        badranges = []
-        conn = sqlite3.connect('tests/ripesql' + datum + '.db')
+    if not os.path.exists(workingdir + 'ripesql' + datum + '.db'):
+        conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
         c = conn.cursor()
-        conn.commit()
         c.execute('''CREATE TABLE inetnum (ipmin integer,
                             ipmax integer, netname text, country
                             text) ''')
         inetnum = csv.reader(open(file), delimiter='|')
         for row in inetnum:
-            badrow = {}
             try:
-                ipmin = ip2int(row[0])
-            except:
-                try:
-                    ipmin = row[0]
-                    badrow['ipmin'] = ipmin
-                except:
-                    ipmin = None
-                    badrow['ipmin'] = None
-
-            try:
-                ipmax = ip2int(row[1])
-            except:
-                try:
-                    ipmax = row[1]
-                    badrow['ipmax'] = ipmax
-                except:
-                    ipmax = None
-                    badrow['ipmax'] = None
-            try:
-                netname = row[2]
-            except:
-                netname = None
-                badrow['netname'] = None
-            try:
-                country = row[3][:2]
-            except:
-                country = None
-                badrow['country'] = None
-            if len(badrow) > 0:
-                badranges.append(badrow)
-            inet = (ipmin, ipmax, netname, country)
-            c.execute('INSERT INTO inetnum VALUES (?,?,?,?)', inet)
+                inet = (ip2int(row[0]), ip2int(row[1]), row[2], row[3][:2])
+                c.execute('INSERT INTO inetnum VALUES (?,?,?,?)', inet)
+            except Exception as e:
+                print(row, e)
+                continue
         conn.commit()
         conn.close()
-        print(badranges)
 
-loadips('tests/iplist.db')
-loadRIPEranges('tests/ripe.db')
+# XXX below takes forever, no optimization yet
+def findRIPErange(ips):
+        conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
+        c = conn.cursor()
+        floorip = c.execute('SELECT min(ipmin) from inetnum')
+        floorip = int(c.fetchone()[0])
+        c.execute('SELECT max(ipmax) from inetnum')
+        ceilip = int(c.fetchone()[0])
+        for ip in ips:
+            if floorip <= ip >= ceilip:
+                for row in c.execute('''select "_ROWID_", "ipmin", "ipmax",
+                                     "netname", "country" from inetnum where
+                                     ipmin < ? and ipmax > ?''', (ip, ip)):
+                    print(row[0], int2ip(row[1]), int2ip(row[2]),
+                          row[3], row[4])
+        conn.close()
+
+
+ips = loadips(workingdir + 'iplist.db')
+#createRIPEdb(workingdir + 'ripe.txt.src')
+findRIPErange(ips)
 
 # XXX DEBUG
 print(datetime.datetime.now()-startTime)
