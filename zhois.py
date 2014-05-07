@@ -94,6 +94,24 @@ def createRIPEdb(file):
         conn.close()
 
 # XXX below takes forever, no optimization yet
+#def findRIPErange(ips):
+#        conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
+#        c = conn.cursor()
+#        floorip = c.execute('SELECT min(ipmin) from inetnum')
+#        floorip = int(c.fetchone()[0])
+#        c.execute('SELECT max(ipmax) from inetnum')
+#        ceilip = int(c.fetchone()[0])
+#        for ip in ips:
+#            if floorip <= ip >= ceilip:
+#                for row in c.execute('''select "_ROWID_", "ipmin", "ipmax",
+#                                     "netname", "country" from inetnum where
+#                                     ipmin < ? and ipmax > ?''', (ip, ip)):
+#                    print(row[0], int2ip(row[1]), int2ip(row[2]),
+#                          row[3], row[4])
+#        conn.close()
+
+# XXX change it around: find
+@profile
 def findRIPErange(ips):
         conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
         c = conn.cursor()
@@ -101,18 +119,20 @@ def findRIPErange(ips):
         floorip = int(c.fetchone()[0])
         c.execute('SELECT max(ipmax) from inetnum')
         ceilip = int(c.fetchone()[0])
-        for ip in ips:
-            if floorip <= ip >= ceilip:
-                for row in c.execute('''select "_ROWID_", "ipmin", "ipmax",
-                                     "netname", "country" from inetnum where
-                                     ipmin < ? and ipmax > ?''', (ip, ip)):
-                    print(row[0], int2ip(row[1]), int2ip(row[2]),
-                          row[3], row[4])
+        #for ip in ips:
+        #    if floorip <= ip >= ceilip:
+        for row in c.execute('''select ipmin, ipmax,
+                             netname, country from inetnum
+                             limit 10''' ):
+            matches = [int2ip(x) for x in ips if row[0] < x < row[1]]
+                    #print(int2ip(row[0]), int2ip(row[1]),
+            #              row[2], row[3])
+            print(matches, row[2], row[3], int2ip(row[1]), int2ip(row[0]))
+            ips = [ x for x in ips if x not in matches]
         conn.close()
 
-
 ips = loadips(workingdir + 'iplist.db')
-#createRIPEdb(workingdir + 'ripe.txt.src')
+createRIPEdb(workingdir + 'ripe.txt.src')
 findRIPErange(ips)
 
 # XXX DEBUG
