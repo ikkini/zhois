@@ -21,6 +21,7 @@ fix () {
 echo "fix the ripe ranges dataset, removing superfluous data"
 echo "remove 0.0.0.0/0 range"
 gsed -i '/0.0.0.0|255.255.255.255|IANA-BLK|EU.*/d' $(dirname "${1}")/ripe.txt.src
+cut -d '|' -f 1,2,3,4 $(dirname "${1}")/ripe.txt.src > $(dirname "${1}")/ripe.db
 }
 cleanup () {
 	rm ripe.src

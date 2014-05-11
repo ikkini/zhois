@@ -60,4 +60,4 @@ docs/_build/
 *.src
 # for now we also do not add .db files
 *.db
-
+temp/
