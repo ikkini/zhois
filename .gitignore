@@ -55,9 +55,9 @@ docs/_build/
 # vim
 *swp
 
+#zhois specific
 # "source" file
 *.src
 # for now we also do not add .db files
 *.db
 
-db/getdb2.sh

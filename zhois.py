@@ -42,98 +42,36 @@ except ImportError:
     exit(1)
 
 try:
-    import sqlite3
+    import redis
 except ImportError:
-    print('get sqlite3 module')
+    print('get redis module')
     exit(1)
 
 datum = datetime.datetime.now().strftime("%F")
 
 
-def run_command(command):
-    p = subprocess.Popen(command, shell=True,
-                         tdout=subprocess.PIPE,
-                         tderr=subprocess.STDOUT)
-    return p.communicate()
-
-
-def ip2int(addr):
-    return struct.unpack("!I", socket.inet_aton(addr))[0]
-
-
-def int2ip(addr):
-    return socket.inet_ntoa(struct.pack("!I", addr))
 
 
 #load ips, sort
 @profile
-def loadips(file):
-    ips = [ip2int(i.strip()) for i in open(file)]
-    ips.sort()
+def loadips(redisdb):
+    r = redis.Redis(db=redisdb)
+    ips = r.keys()
     return ips
 
 
-@profile
-def createRIPEdb(file):
-    """Once a day, if the ripe database does not exist, create one"""
-    if not os.path.exists(workingdir + 'ripesql' + datum + '.db'):
-        conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
-        c = conn.cursor()
-        c.execute('''CREATE TABLE inetnum (ipmin integer,
-                            ipmax integer, netname text, country
-                            text) ''')
-        inetnum = csv.reader(open(file), delimiter='|')
-        for row in inetnum:
-            try:
-                inet = (ip2int(row[0]), ip2int(row[1]), row[2], row[3][:2])
-                c.execute('INSERT INTO inetnum VALUES (?,?,?,?)', inet)
-            except Exception as e:
-                print(row, e)
-                continue
-        conn.commit()
-        conn.close()
 
-# XXX below takes forever, no optimization yet
-#def findRIPErange(ips):
-#        conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
-#        c = conn.cursor()
-#        floorip = c.execute('SELECT min(ipmin) from inetnum')
-#        floorip = int(c.fetchone()[0])
-#        c.execute('SELECT max(ipmax) from inetnum')
-#        ceilip = int(c.fetchone()[0])
-#        for ip in ips:
-#            if floorip <= ip >= ceilip:
-#                for row in c.execute('''select "_ROWID_", "ipmin", "ipmax",
-#                                     "netname", "country" from inetnum where
-#                                     ipmin < ? and ipmax > ?''', (ip, ip)):
-#                    print(row[0], int2ip(row[1]), int2ip(row[2]),
-#                          row[3], row[4])
-#        conn.close()
-
-# XXX change it around: find
 @profile
 def findRIPErange(ips):
-        conn = sqlite3.connect(workingdir + 'ripesql' + datum + '.db')
-        c = conn.cursor()
-        floorip = c.execute('SELECT min(ipmin) from inetnum')
-        floorip = int(c.fetchone()[0])
-        c.execute('SELECT max(ipmax) from inetnum')
-        ceilip = int(c.fetchone()[0])
-        #for ip in ips:
-        #    if floorip <= ip >= ceilip:
-        for row in c.execute('''select ipmin, ipmax,
-                             netname, country from inetnum
-                             limit 10''' ):
-            matches = [int2ip(x) for x in ips if row[0] < x < row[1]]
-                    #print(int2ip(row[0]), int2ip(row[1]),
-            #              row[2], row[3])
-            print(matches, row[2], row[3], int2ip(row[1]), int2ip(row[0]))
-            ips = [ x for x in ips if x not in matches]
-        conn.close()
+    r = redis.Redis(db=7)
+    for ip in ips:
+        for cidr in reversed(range(8,32)):
+            key = netaddr.IPNetwork(ip.decode("utf-8") + "/" + str(cidr)).network
+            if r.exists(key):
+                print(ip.decode("utf-8"),cidr,[i.decode("utf-8") for i in r.zrange(key, 1, 2)])
+                break
 
-ips = loadips(workingdir + 'iplist.db')
-createRIPEdb(workingdir + 'ripe.txt.src')
+ips = loadips(6)
 findRIPErange(ips)
-
 # XXX DEBUG
 print(datetime.datetime.now()-startTime)
