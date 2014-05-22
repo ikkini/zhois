@@ -61,3 +61,4 @@ docs/_build/
 # for now we also do not add .db files
 *.db
 temp/
+*pdf
