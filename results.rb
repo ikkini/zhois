@@ -6,5 +6,5 @@ require 'redis'
 results = Redis.new(db: 1, driver: 'hiredis')
 
 results.keys.each do |ip|
-  puts "#{ip}," << results.lrange(ip, 0, -1).join(",")
+  puts "#{ip}," << results.lrange(ip, 0, -1).join(',')
 end
