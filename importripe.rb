@@ -11,17 +11,22 @@ CSV.foreach('src/ripe.formatted.src', col_sep: '|') do |row|
   broadcastip = row[1]
   iprangesize = NetAddr.range(networkip, broadcastip,
                               Inclusive: true, Size: true)
-  # skip any range above a /8
+  # Skip any range above a /8.
   if iprangesize < 16_777_216
-    # split rows and convert to correct lower:UPPER format
+    # Split rows and convert to lower:UPPER format.
+    # This correct errors in netnames and country names.
+    # Current shellscript leaves whitespaces before and after.
     v2 = row[2].split(':')
     v3 = row[3].split(':')
     v2 = v2[0] << ':' << v2[1].upcase
     v3 = v3[0] << ':' << v3[1].rstrip.upcase
+    # (Re)Create an inetnum entry for storing in countries and netnames
+    inetnum = 'inetnum:' << networkip << '-'  << broadcastip
+    # And create sorted sets with each value as a key.
     ripe.zadd(networkip, [[iprangesize, broadcastip],
                           [iprangesize, v2],
                           [iprangesize, v3]])
-    ripe.zadd(v2, iprangesize, v3)
-    ripe.zadd(v3, iprangesize, v2)
+    ripe.zadd(v2, [[iprangesize, v3], [iprangesize, inetnum]])
+    ripe.zadd(v3, [[iprangesize, v2], [iprangesize, inetnum]])
   end
 end

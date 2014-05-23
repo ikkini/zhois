@@ -14,17 +14,19 @@ whois = Redis.new(db: 1, driver: 'hiredis')
 zmappedips.keys.each do |ip|
   netaddrlist = []
   # RIPE DB 7 does not contain anything larger than a /8 and RIPE should
-  #    not have anything larger than a /30
+  #    not have anything larger than a /30.
   30.downto(8) do |mask|
     netaddr = NetAddr::CIDRv4.create("#{ip}/#{mask}")
-    # NetAddr gives network addresses and subnet size
+    # Use NetAddr to create pairs of network address and subnet size.
     netaddrlist << [netaddr.first, netaddr.size]
   end
   netaddrlist.each do |naddr|
-    # zrangebyscore, score is subnet size
+    # First test for existence. This means two roundtrips.
     if ripe.zcount(naddr[0], naddr[1], naddr[1]) == 3
+      # zrangebyscore, score is subnet size, find smallest subnet
+      #     + country & netname
       a = ripe.zrangebyscore(naddr[0], naddr[1], naddr[1])
-      # OPTIMIZE
+      # push match to the redis whois table (1)
       whois.rpush(ip, [naddr[1], a[1], a[2]])
       break
     end
