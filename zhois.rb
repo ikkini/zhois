@@ -7,11 +7,11 @@ require 'netaddr'
 # 6 contains found IPs.
 # 7 contains zsets: k:first inetnum, v=last inetnum, score=networksize,
 #   v=netname, score=networksize, v=country, score=networksize.
-zmappedips = Redis.new(db: 6, driver: 'hiredis')
+iplist = Redis.new(db: 6, driver: 'hiredis')
 ripe = Redis.new(db: 7, driver: 'hiredis')
 whois = Redis.new(db: 1, driver: 'hiredis')
 
-zmappedips.keys.each do |ip|
+iplist.keys.each do |ip|
   netaddrlist = []
   # RIPE DB 7 does not contain anything larger than a /8 and RIPE should
   #    not have anything larger than a /30.

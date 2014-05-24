@@ -3,8 +3,8 @@ require 'csv'
 require 'hiredis'
 require 'redis'
 
-zmappedips = Redis.new(db: 6, driver: 'hiredis')
-zmappedips.flushdb
+iplist = Redis.new(db: 6, driver: 'hiredis')
+iplist.flushdb
 CSV.foreach('src/zmapped') do |row|
-  zmappedips.set(row[0], row[0])
+  iplist.set(row[0], row[0])
 end

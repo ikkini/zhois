@@ -1,64 +1,39 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/test/tmp/
+/test/version_tmp/
+/tmp/
 
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-env/
-bin/
+## Specific to RubyMotion:
+.dat*
+.repl_history
 build/
-develop-eggs/
-dist/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+## Documentation cache and generated files:
+/.yardoc/
+/_yardoc/
+/doc/
+/rdoc/
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.cache
-nosetests.xml
-coverage.xml
+## Environment normalisation:
+/.bundle/
+/lib/bundler/man/
 
-# Translations
-*.mo
+# for a library or gem, you might want to ignore these files since the code is
+# intended to run in multiple environments; otherwise, check them in:
+# Gemfile.lock
+# .ruby-version
+# .ruby-gemset
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
+# unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
+.rvmrc
 
-# Rope
-.ropeproject
-
-# Django stuff:
-*.log
-*.pot
-
-# Sphinx documentation
-docs/_build/
-
-# vim
-*swp
-
-#zhois specific
-# "source" file
-*.src
-# for now we also do not add .db files
-*.db
-temp/
-*pdf
+# zhois specific
+*.pdf
+*.csv
+src/
