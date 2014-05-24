@@ -9,7 +9,10 @@ require 'netaddr'
 #   v=netname, score=networksize, v=country, score=networksize.
 iplist = Redis.new(db: 6, driver: 'hiredis')
 ripe = Redis.new(db: 7, driver: 'hiredis')
-whois = Redis.new(db: 1, driver: 'hiredis')
+results = Redis.new(db: 1, driver: 'hiredis')
+
+# Flush the results database
+results.flushdb
 
 iplist.keys.each do |ip|
   netaddrlist = []
@@ -26,8 +29,9 @@ iplist.keys.each do |ip|
       # zrangebyscore, score is subnet size, find smallest subnet
       #     + country & netname
       a = ripe.zrangebyscore(naddr[0], naddr[1], naddr[1])
-      # push match to the redis whois table (1)
-      whois.rpush(ip, [naddr[1], a[1], a[2]])
+      # Insert netaddr.size, "country:<name>" and "netname:<name>"
+      #     at the tail of the list stored at IP into results table (1)
+      results.rpush(ip, [naddr[1], a[1], a[2]])
       break
     end
   end
