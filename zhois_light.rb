@@ -9,7 +9,7 @@ require 'netaddr'
 #   v=netname, score=networksize, v=country, score=networksize.
 iplist = Redis.new(db: 6, driver: 'hiredis')
 ripe = Redis.new(db: 7, driver: 'hiredis')
-results = Redis.new(db: 1, driver: 'hiredis')
+results = Redis.new(db: 2, driver: 'hiredis')
 
 # Flush the results database
 puts 'flush the results database'
@@ -33,16 +33,8 @@ iplist.keys.each do |ip|
     # Each of these contains the others, everything sorted (zadd score) by
     # iprangesize.
     #
-    results.multi do
-      results.zadd('inetnum:' + naddr[0] + '-' + naddr[2],
-                   [[naddr[1], 'ip:' + ip], [naddr[1], a[1]], [naddr[1], a[2]]])
-      results.zadd(a[1], [[naddr[1], 'ip:' + ip], [naddr[1], a[2]],
-                          [naddr[1], 'inetnum:' + naddr[0] + '-' + naddr[2]]])
-      results.zadd(a[2], [[naddr[1], 'ip:' + ip], [naddr[1], a[1]],
-                          [naddr[1], 'inetnum:' + naddr[0] + '-' + naddr[2]]])
-      results.zadd('ip:' + ip, [[naddr[1], a[2]], [naddr[1], a[1]],
-                                [naddr[1], 'inetnum:' + naddr[0] + '-' +
-                                 naddr[2]]])
-    end
+    results.incr('inetnum:' + naddr[0] + '-' + naddr[2])
+    results.incr(a[1])
+    results.incr(a[2])
   end
 end
