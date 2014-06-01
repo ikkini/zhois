@@ -30,7 +30,7 @@ parse () {
 	# breaking the line before inetnum, removing spaces
 	# removing all lines not beginning with a digit (cruft)
 	# removing all fields after the forth (a lot of superfluous country/netname entries)
-	egrep "^inetnum:|^country:|^netname:|^$" "src/${src}"  |sed 's/inetnum:/%inetnum:/g' |\
+	egrep "^inetnum:|^country:|^netname:|^$" "${src}"  |sed 's/inetnum:/%inetnum:/g' |\
 		tr '\n' ' ' |tr -s ' ' | tr '%' '\n' |\
 		sed 's/^inetnum://g;s/ - /|/g;s/ netname: /|netname:/g;s/ country: /|country:/g' |\
 	       	grep "^ [[:digit:]]" | cut -f 1,2,3,4 -d '|'> src/ripe.formatted.src
@@ -40,6 +40,6 @@ else
 fi
 }
 
-download $1
+#download $1
 parse $1
 
