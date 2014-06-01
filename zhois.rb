@@ -9,7 +9,7 @@ require 'netaddr'
 #   v=netname, score=networksize, v=country, score=networksize.
 iplist = Redis.new(db: 6, driver: 'hiredis')
 ripe = Redis.new(db: 7, driver: 'hiredis')
-results = Redis.new(db: 2, driver: 'hiredis')
+results = Redis.new(db: 1, driver: 'hiredis')
 
 # Flush the results database
 puts 'flush the results database'
@@ -30,8 +30,10 @@ iplist.keys.each do |ip|
     # OPTIMIZE: How to make this cheaper?
     a = ripe.zrangebyscore(naddr[0], naddr[1], naddr[1])
     next unless a.size == 3
-    # Insert netaddr.size, "country:<name>" and "netname:<name>"
-    # The naddr[1] is kept as data, not for sorting
+    # Insert 4 record types per match: ip:, inetnum:, netname:, and country:.
+    # Each of these contains the others, everything sorted (zadd score) by
+    # iprangesize.
+    #
     results.multi do
       results.zadd('inetnum:' + naddr[0] + '-' + naddr[2],
                    [[naddr[1], 'ip:' + ip], [naddr[1], a[1]], [naddr[1], a[2]]])
