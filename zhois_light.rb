@@ -29,10 +29,7 @@ iplist.keys.each do |ip|
     # OPTIMIZE: How to make this cheaper?
     a = ripe.zrangebyscore(naddr[0], naddr[1], naddr[1])
     next unless a.size == 3
-    # Insert 4 record types per match: ip:, inetnum:, netname:, and country:.
-    # Each of these contains the others, everything sorted (zadd score) by
-    # iprangesize.
-    #
+    # Insert 3 record types (counters) per match: inetnum:, netname:, and country:.
     results.incr('inetnum:' + naddr[0] + '-' + naddr[2])
     results.incr(a[1])
     results.incr(a[2])
