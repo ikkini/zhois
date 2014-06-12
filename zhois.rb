@@ -18,8 +18,8 @@ results.flushdb
 puts 'Iterate over iplist keys'
 iplist.keys.each do |ip|
   netaddrlist = []
-  # RIPE DB 7 does not contain anything larger than a /8 and RIPE should
-  #    not have anything larger than a /30.
+  # RIPE DB 7 does not contain any subnet larger than a /8 and RIPE should
+  #    not have any CIDR larger than a /30.
   30.downto(8) do |mask|
     netaddr = NetAddr::CIDRv4.create("#{ip}/#{mask}")
     # Use NetAddr to create pairs of network address and subnet size.
