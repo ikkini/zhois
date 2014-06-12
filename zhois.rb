@@ -27,22 +27,33 @@ iplist.keys.each do |ip|
   end
   netaddrlist.each do |naddr|
     # OPTIMIZE: How to make this cheaper?
+    # below assumes we know what is at a[1] (country, cause it starts
+    # with a c) and a[2] (netname)
     a = ripe.zrangebyscore(naddr[0], naddr[1], naddr[1])
     next unless a.size == 3
-    # Insert 4 record types per match: ip:, inetnum:, netname:, and country:.
+    # Insert 4 record types per match: ip:, inetnum:, country:, and netname:.
     # Each of these contains the others, everything sorted (zadd score) by
     # iprangesize.
     #
     results.multi do
-      results.zadd('inetnum:' + naddr[0] + '-' + naddr[2],
-                   [[naddr[1], 'ip:' + ip], [naddr[1], a[1]], [naddr[1], a[2]]])
-      results.zadd(a[1], [[naddr[1], 'ip:' + ip], [naddr[1], a[2]],
-                          [naddr[1], 'inetnum:' + naddr[0] + '-' + naddr[2]]])
-      results.zadd(a[2], [[naddr[1], 'ip:' + ip], [naddr[1], a[1]],
-                          [naddr[1], 'inetnum:' + naddr[0] + '-' + naddr[2]]])
-      results.zadd('ip:' + ip, [[naddr[1], a[2]], [naddr[1], a[1]],
-                                [naddr[1], 'inetnum:' + naddr[0] + '-' +
-                                 naddr[2]]])
+      # it adds a fraction extra time to the parsing to assign these to
+      # readable values
+      inetnum = 'inetnum:' + naddr[0] + '-' + naddr[2]
+      country = a[1]
+      netname = a[2]
+      netrange = naddr[1]
+      results.zadd(inetnum, [[netrange, 'ip:' + ip], [netrange, country],
+                             [netrange, netname]])
+      results.zadd(country, [[netrange, 'ip:' + ip], [netrange, netname],
+                             [netrange, inetnum]])
+      results.zadd(netname, [[netrange, 'ip:' + ip], [netrange, country],
+                             [netrange, inetnum]])
+      results.zadd('ip:' + ip, [[netrange, netname], [netrange, country],
+                                [netrange, inetnum]])
+      results.sadd('index:ip', ip)
+      results.sadd('index:inetnum', inetnum)
+      results.sadd('index:country', a[1])
+      results.sadd('index:netname', a[2])
     end
   end
 end
