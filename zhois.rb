@@ -52,8 +52,8 @@ iplist.keys.each do |ip|
                                 [netrange, inetnum]])
       results.sadd('index:ip', ip)
       results.sadd('index:inetnum', inetnum)
-      results.sadd('index:country', a[1])
-      results.sadd('index:netname', a[2])
+      results.sadd('index:country', country)
+      results.sadd('index:netname', netname)
     end
   end
 end
