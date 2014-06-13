@@ -5,6 +5,10 @@ require 'redis'
 # Connect to Redis databases and print "," formatted to stdout
 results = Redis.new(db: 1, driver: 'hiredis')
 
-results.keys.each do |ip|
-  puts "#{ip}," << results.lrange(ip, 0, -1).join(',')
+ARGV.each do |arg|
+puts arg
+
+results.smembers('index:' + "#{arg}").each do |zkey|
+  puts '[\'' + "#{zkey.sub(arg + ':', '')}'," << results.zcard(zkey).to_s + ']'
+end
 end
