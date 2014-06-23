@@ -58,6 +58,9 @@ $ time ruby zhois.rb
 real    74m48.554s
 user    40m48.304s
 sys     12m8.748s
+
+$ redis-cli -n 1 dbsize
+(integer) 485544
 ```
         
 This script goes through the list of found IPs (db 6), creates a list of possible network addresses for that IP (with rangesizes) and looks those network address in the RIPE db (7). It stops on the smallest match (from /30 down to /8) and adds the match into db 1 as:
