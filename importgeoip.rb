@@ -11,7 +11,7 @@ geoip.flushdb
 puts "adding networkaddr:broadcastaddr:countrycode values to index:geoip"
 lowest = [0]
 
-# Paste -d ',' geoip.csv geoip2.csv > geoipmatrix.csv
+# paste -d ',' geoip.csv geoip2.csv > geoipmatrix.csv
 # Add approriate "0" fields to end of geoip and beginning of geoip2
 #   before you do this.
 CSV.foreach('geoip/geoipmatrix.csv', col_sep: ',') do |row|
