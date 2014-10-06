@@ -10,15 +10,10 @@ puts 'Flushing geoip db'
 geoip.flushdb
 puts 'Adding network(int):broadcast(int):CC GeoIP values to index:geoip'
 
-<<<<<<< HEAD
-# paste -d ',' geoip.csv geoip2.csv > geoipmatrix.csv
-# Add approriate "0" fields to end of geoip and beginning of geoip2
-=======
 # Paste -d ',' geoip.csv geoip2.csv > geoipmatrix.csv
 # Add approriate '0' fields to end of geoip and beginning of geoip2
->>>>>>> origin/master
 #   before you do this.
-CSV.foreach('geoip/geoipmatrix', col_sep: ',') do |row|
+CSV.foreach('geoip/geoipmatrix.csv', col_sep: ',') do |row|
   unless row[2].to_i == 0
     if row[2].to_i - row[9].to_i > 1
       # Add skipped range as an added row.
